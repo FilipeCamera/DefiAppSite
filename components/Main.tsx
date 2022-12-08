@@ -3,7 +3,8 @@ import { RiSettings3Fill } from "react-icons/ri";
 import { AiOutlineDown } from "react-icons/ai";
 
 import ethLogo from "../assets/eth.png";
-import { ChangeEvent } from "react";
+import { ChangeEvent, useContext } from "react";
+import { TransactionContext } from "../context/transactionContext";
 
 const style = {
   wrapper: "w-screen flex items-center justify-center mt-14",
@@ -23,10 +24,20 @@ const style = {
     "bg-[#2172E5] my-2 rounded-2xl py-2 text-xl font-semibold flex items-center justify-center cursor-pointer border border-[#2172E5] hover:border-[#234169]",
 };
 
-const handleChange = (e: ChangeEvent, value: string) => {};
-const handleSubmit = (e: any) => {};
-
 const Main = () => {
+  const { sendTransaction, formData, handleChange } =
+    useContext(TransactionContext);
+
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
+    const { addressTo, amount } = formData;
+    console.log(addressTo, amount);
+    console.log(formData);
+    if (!addressTo || !amount) return;
+
+    sendTransaction();
+  };
+
   return (
     <div className={style.wrapper}>
       <div className={style.content}>
@@ -39,10 +50,11 @@ const Main = () => {
         <div className={style.transferPropContainer}>
           <input
             type="text"
+            name="amount"
             className={style.transferPropInput}
             placeholder="0.0"
             pattern="^[0-9]*[.,]?[0-9]*$"
-            onChange={(e) => handleChange(e, "amount")}
+            onChange={handleChange}
           />
           <div className={style.currencySelector}>
             <div className={style.currencySelectorContent}>
@@ -57,9 +69,10 @@ const Main = () => {
         <div className={style.transferPropContainer}>
           <input
             type="text"
+            name="addressTo"
             className={style.transferPropInput}
             placeholder="0x..."
-            onChange={(e) => handleChange(e, "addressTo")}
+            onChange={handleChange}
           />
           <div className={style.currencySelector}></div>
         </div>

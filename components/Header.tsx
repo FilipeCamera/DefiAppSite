@@ -81,14 +81,21 @@ const Header = () => {
             <AiOutlineDown />
           </div>
         </div>
-        <div
-          className={`${style.button} ${style.buttonPadding}`}
-          onClick={() => connectWallet()}
-        >
-          <div className={`${style.buttonAccent} ${style.buttonPadding}`}>
-            Connect Wallet
+        {currentAccount ? (
+          <div className={`${style.button} ${style.buttonPadding}`}>
+            <div className={style.buttonTextContainer}>{currentAccount}</div>
           </div>
-        </div>
+        ) : (
+          <div
+            className={`${style.button} ${style.buttonPadding}`}
+            onClick={() => connectWallet()}
+          >
+            <div className={`${style.buttonAccent} ${style.buttonPadding}`}>
+              Connect Wallet
+            </div>
+          </div>
+        )}
+
         <div className={`${style.button} ${style.buttonPadding}`}>
           <div className={`${style.buttonIconContainer} mx-2`}>
             <HiOutlineDotsVertical />
