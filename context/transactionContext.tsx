@@ -2,6 +2,7 @@ import { useState, useEffect, createContext } from "react";
 
 import { ethers } from "ethers";
 import { contractAbi, contractAddress } from "../utils/constants";
+import { client } from "../clients/sanityClient";
 
 export const TransactionContext = createContext<any>(undefined);
 
@@ -13,8 +14,22 @@ export const TransactionProvider = ({ children }: any) => {
     useTransactions();
 
   useEffect(() => {
+    if (!currentAccount) return;
+    async () => {
+      const userDoc = {
+        _type: "users",
+        _id: currentAccount,
+        username: "Unnamed",
+        address: currentAccount,
+      };
+
+      await client.createIfNotExists(userDoc);
+    };
+  }, [currentAccount]);
+  useEffect(() => {
     checkIfWalletIsConnected();
   }, []);
+
   return (
     <TransactionContext.Provider
       value={{
@@ -33,7 +48,7 @@ export const TransactionProvider = ({ children }: any) => {
 
 const useTransactions = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const { metamask, getEthereumContract } = useConnectWallet();
+  const { metamask, getEthereumContract, currentAccount } = useConnectWallet();
   const [formData, setFormData] = useState({
     addressTo: "",
     amount: "",
@@ -43,6 +58,40 @@ const useTransactions = () => {
     e.preventDefault();
 
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const saveTransaction = async (
+    txHash: string,
+    amount: string,
+    fromAddress: string | undefined = currentAccount,
+    toAddress: string
+  ) => {
+    if (!fromAddress) return alert("Not exist currentAccount");
+
+    const txDoc = {
+      _type: "transactions",
+      _id: txHash,
+      toAddress: toAddress,
+      timestamp: new Date(Date.now()).toISOString(),
+      txHash: txHash,
+      amount: parseFloat(amount),
+    };
+
+    await client.createIfNotExists(txDoc);
+
+    await client
+      .patch(fromAddress)
+      .setIfMissing({ transactions: [] })
+      .insert("after", "transactions[-1]", [
+        {
+          _key: txHash,
+          _ref: txHash,
+          _type: "reference",
+        },
+      ])
+      .commit();
+
+    return;
   };
 
   const sendTransaction = async () => {
@@ -71,7 +120,12 @@ const useTransactions = () => {
 
       await transactionHash.wait();
 
-      //await saveTransaction(transactionHash.hash, amount, currentAccount, addressTo)
+      await saveTransaction(
+        transactionHash.hash,
+        amount,
+        currentAccount,
+        addressTo
+      );
 
       setIsLoading(false);
     } catch (err) {
